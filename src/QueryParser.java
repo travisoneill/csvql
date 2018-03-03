@@ -53,7 +53,7 @@ public class QueryParser {
             queryObj.join = parseTablename(currentWord);
             break;
           case "ON":
-            queryObj.on.addAll(Arrays.asList(currentWord.split("\\.")));
+            queryObj.on.add(currentWord);
             break;
           case "WHERE":
             queryObj.where.add(currentWord);
@@ -81,7 +81,7 @@ public class QueryParser {
     if (col.equals("*")) {
       return "*";
     }
-    
+
     String[] tabCol = col.split("\\.");
     if (tabCol.length == 1) {
       return defaultTable + "." + col;

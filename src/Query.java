@@ -12,4 +12,13 @@ public class Query {
   public boolean isJoin() {
     return join != null;
   }
+
+  public void print() {
+    Utils.print("SELECT: ", select);
+    Utils.print("WHERE: ", where);
+    Utils.print("FROM: ", from);
+    Utils.print("JOIN: ", join);
+    Utils.print("ON: ", on);
+    System.out.println(" ");
+  }
 }

@@ -15,6 +15,10 @@ public class RunQuery {
       //   query = console.readLine("\r> ");
       // }
 
+      if (queryPart.length() == 0) {
+        continue;
+      }
+
       if (queryPart.charAt(queryPart.length() - 1) == ';') {
         query += queryPart.substring(0, queryPart.length() - 1);
         query = query.trim();
