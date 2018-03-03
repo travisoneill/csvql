@@ -54,7 +54,7 @@ public class Executor {
     for (int i = 0; i < query.on.size(); i++) {
       String[] tabCol = query.on.get(i).split("\\.");
       String tablename = tabCol[0];
-      String colname = tabCol[1];
+      String colname = tabCol.length > 1 ? tabCol[1] : null;
       if (tablename.equals(rightTable)) {
         foreignKey = colname;
       } else if (tablename.equals(leftTable)) {
