@@ -3,17 +3,13 @@ import java.util.Stack;
 
 public class RunQuery {
   public static void main(String[] args) {
-    System.out.println("Enter Query:");
     Stack<String> queryLog = new Stack<>();
     Console console = System.console();
     String query = "";
     while (true) {
-      String queryPart = console.readLine("> ");
-
-      // if (queryPart.length() == 0) {
-      //   console.printf("  %s", queryLog.peek());
-      //   query = console.readLine("\r> ");
-      // }
+      String database = System.getenv("CSVQL_DBNAME");
+      String cursor = database + "> ";
+      String queryPart = console.readLine(cursor);
 
       if (queryPart.length() == 0) {
         continue;
