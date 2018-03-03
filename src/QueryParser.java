@@ -2,12 +2,15 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.List;
+import java.util.Arrays;
 
 public class QueryParser {
   public static Query parse(String queryStr) {
     Set<String> keywords = new HashSet<String>();
     keywords.add("SELECT");
     keywords.add("FROM");
+    keywords.add("JOIN");
+    keywords.add("ON");
     keywords.add("WHERE");
     keywords.add("LIMIT");
 
@@ -46,6 +49,12 @@ public class QueryParser {
           case "FROM":
             queryObj.from = parseTablename(currentWord);
             break;
+          case "JOIN":
+            queryObj.join = parseTablename(currentWord);
+            break;
+          case "ON":
+            queryObj.on.addAll(Arrays.asList(currentWord.split("\\.")));
+            break;
           case "WHERE":
             queryObj.where.add(currentWord);
             break;
@@ -55,7 +64,30 @@ public class QueryParser {
       }
     }
 
+    String tablename = queryObj.from[1];
+    for (int i = 0; i < queryObj.select.size(); i++) {
+      String tabCol = parseColumn(queryObj.select.get(i), tablename);
+      queryObj.select.set(i, tabCol);
+    }
+
+    if (queryObj.where.size() > 0) {
+      queryObj.where.set(0, parseColumn(queryObj.where.get(0), tablename));
+    }
+
     return queryObj;
+  }
+
+  private static String parseColumn(String col, String defaultTable) {
+    if (col.equals("*")) {
+      return "*";
+    }
+    
+    String[] tabCol = col.split("\\.");
+    if (tabCol.length == 1) {
+      return defaultTable + "." + col;
+    } else {
+      return col;
+    }
   }
 
   private static String[] parseTablename(String tablename) {

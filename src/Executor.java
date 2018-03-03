@@ -1,54 +1,99 @@
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Executor {
-  private static int[] parseSelect(List<String> colnames, Schema schema) {
-    int[] indices;
-    if (colnames.get(0).equals("*")) {
-      indices = new int[schema.length()];
-      for (int i = 0; i < indices.length; i++) {
-        indices[i] = i;
-      }
-    } else {
-      indices = new int[colnames.size()];
-      for (int i = 0; i < indices.length; i++) {
-        indices[i] = schema.getIndex(colnames.get(i));
-      }
-    }
-
-    return indices;
-  }
 
   public static void execute(String sqlQuery) {
     Query query = QueryParser.parse(sqlQuery);
-    TableReader reader = TableReader.create(query.from);
-    Schema schema = new Schema(reader.readRow(), reader.readRow());
-    int[] selectIdx = parseSelect(query.select, schema);
-    String colname = query.where.size() > 0 ? query.where.get(0) : null;
-    String oper = query.where.size() > 0 ? query.where.get(1) : null;
-    String comp = query.where.size() > 0 ? query.where.get(2) : null;
-    Column column = schema.getColumn(colname);
-    int idx = schema.getIndex(colname);
-
-    int found = 0;
-    String[] line;
-    while ((line = reader.readRow()) != null) {
-      if (found == query.limit) {
-        reader.close();
-        break;
-      }
-
-      if (colname == null || column.where(line[idx], oper, comp)) {
-        found++;
-        printRow(line, selectIdx);
-      }
+    if (query.isJoin()) {
+      executeJoin(query);
+    } else {
+      executeSimple(query);
     }
   }
 
-  private static void printRow(String[] line, int[] selectIdx) {
+  private static void executeJoin(Query query) {
+    String leftTable = query.from[1];
+    String rightTable = query.join[1];
+    TableReader leftReader = TableReader.create(query.from);
+    TableReader rightReader = TableReader.create(query.join);
+    Schema leftSchema = new Schema(leftReader.readRow(), leftReader.readRow(), leftTable);
+    Schema rightSchema = new Schema(rightReader.readRow(), rightReader.readRow(), rightTable);
+    String primaryKey = null;
+    String foreignKey = null;
+
+    for (int i = 0; i < query.on.size(); i++) {
+      String[] tab = query.on.get(i).split("\\.");
+      String tablename = tab[0];
+      if (tablename == rightTable) {
+        foreignKey = tab[1];
+      } else if (tablename == leftTable) {
+        primaryKey = tab[1];
+      }
+    }
+
+    List<String> leftSelect = new ArrayList<>();
+    leftSelect.add(primaryKey);
+    for (int i = 0; i < query.select.size(); i++) {
+      String[] tabCol = query.select.get(i).split("\\.");
+      if (tabCol.length == 1) {
+        leftSelect.add(tabCol[0]);
+      } else if (tabCol[0] == leftTable) {
+        leftSelect.add(tabCol[1]);
+      }
+    }
+
+
+    Query leftQuery = new Query();
+    leftQuery.select = leftSelect;
+    leftQuery.from = query.from;
+    String[] whereTabCol = query.where.get(0).split("\\.");
+    if (whereTabCol.length == 1) {
+      leftQuery.where = query.where;
+    } else if (whereTabCol[0] == leftTable) {
+      // leftQuery
+    }
+
+    // if (query.where.size() > 0 && query.where.get(0).split("\\.") == leftTable) {
+    //   leftQuery.where =
+    // }
+
+
+
+    Map<String, TableReader> readerMap = new HashMap<>();
+    readerMap.put(leftTable, leftReader);
+    readerMap.put(rightTable, rightReader);
+
+    Map<String, Schema> schemaMap = new HashMap<>();
+    schemaMap.put(leftTable, leftSchema);
+    schemaMap.put(rightTable, rightSchema);
+
+
+  }
+
+  private static void executeSimple(Query query) {
+    TableReader reader = TableReader.create(query.from);
+    Schema schema = new Schema(reader.readRow(), reader.readRow(), reader.name);
+    SelectIterator selector = new SelectIterator(reader, schema, query);
+
+    int found = 0;
+    String[] row;
+    while (found < query.limit && (row = selector.next()) != null) {
+      found++;
+      printRow(row);
+    }
+
+    reader.close();
+  }
+
+  private static void printRow(String[] row) {
     StringBuilder out = new StringBuilder();
-    int len = selectIdx.length;
+    int len = row.length;
     for (int i = 0; i < len; i++) {
-      out.append(line[i]);
+      out.append(row[i]);
       if (i < len - 1) {
         out.append(" | ");
       }

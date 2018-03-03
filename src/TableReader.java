@@ -1,11 +1,13 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.List;
 
 public class TableReader {
   private BufferedReader reader;
   public int columnCount = 0;
   private Boolean endOfFile = false;
+  public String name;
 
   public static TableReader create(String[] tablename) {
     try {
@@ -20,6 +22,7 @@ public class TableReader {
   private TableReader(String[] tablename) throws IOException {
     String home = System.getenv("CSVQL_DBHOME");
     String db = tablename[0];
+    name = tablename[1];
     String filename = tablename[1] + ".csv";
     String path = home + "/" + db + "/" + filename;
     FileReader fileReader = new FileReader(path);

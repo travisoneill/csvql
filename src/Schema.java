@@ -4,11 +4,12 @@ public class Schema {
   private Column[] columns;
   private HashMap<String, Integer> columnIndex = new HashMap<>();
 
-  public Schema(String[] names, String[] types) {
+  public Schema(String[] names, String[] types, String tablename) {
     columns = new Column[names.length];
     for (int i = 0; i < names.length; i++) {
-      columns[i] = ColumnFactory.create(names[i], types[i]);
-      columnIndex.put(names[i], i);
+      String name = tablename + "." + names[i];
+      columns[i] = ColumnFactory.create(name, types[i]);
+      columnIndex.put(name, i);
     }
   }
 
@@ -17,7 +18,6 @@ public class Schema {
   }
 
   public int getIndex(String colname) {
-    // System.out.println(colname);
     if (colname == null) {
       return -1;
     } else {
