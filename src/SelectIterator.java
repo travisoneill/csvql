@@ -41,16 +41,23 @@ public class SelectIterator {
   }
 
   private static int[] parseSelect(List<String> colnames, Schema schema) {
-    int[] indices;
-    if (colnames.get(0).equals("*")) {
-      indices = new int[schema.length()];
-      for (int i = 0; i < indices.length; i++) {
-        indices[i] = i;
-      }
-    } else {
-      indices = new int[colnames.size()];
-      for (int i = 0; i < indices.length; i++) {
-        indices[i] = schema.getIndex(colnames.get(i));
+    int len = 0;
+    for (int i = 0; i < colnames.size(); i++) {
+      len += colnames.get(i).equals("*") ? schema.length() : 1;
+    }
+
+    int[] indices = new int[len];
+    int offset = 0;
+    for (int i = 0; i < colnames.size(); i++) {
+      String colname = colnames.get(i);
+      if (colname.equals("*")) {
+        int j;
+        for (j = 0; j < schema.length(); j++) {
+          indices[i + offset] = j;
+        }
+        offset += j - 1;
+      } else {
+        indices[i + offset] = schema.getIndex(colname);
       }
     }
 
