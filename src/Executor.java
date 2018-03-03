@@ -9,11 +9,26 @@ import java.io.*;
 public class Executor {
 
   public static void execute(String sqlQuery) {
-    Query query = QueryParser.parse(sqlQuery);
-    if (query.isJoin()) {
-      executeJoin(query);
-    } else {
-      executeSimple(query);
+    Query query;
+    try {
+      query = QueryParser.parse(sqlQuery);
+    } catch (Exception err) {
+      System.out.println("Query Parsing Error:");
+      System.out.println(err.getMessage());
+      err.printStackTrace();
+      return;
+    }
+
+    try {
+      if (query.isJoin()) {
+        executeJoin(query);
+      } else {
+        executeSimple(query);
+      }
+    } catch (Exception err) {
+      System.out.println("Query Execution Error:");
+      System.out.println(err.getMessage());
+      err.printStackTrace();
     }
   }
 
