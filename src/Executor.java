@@ -86,6 +86,12 @@ public class Executor {
 
     for (int i = 0; i < query.select.size(); i++) {
       String colname = query.select.get(i);
+      if (colname == "*") {
+        leftSelect.add(colname);
+        rightSelect.add(colname);
+        continue;
+      }
+
       String[] tabCol = colname.split("\\.");
       if (tabCol.length == 1 || tabCol[0].equals(leftTable)) {
         // assume left table if not specified

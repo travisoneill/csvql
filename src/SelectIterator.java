@@ -43,17 +43,17 @@ public class SelectIterator {
   private static int[] parseSelect(List<String> colnames, Schema schema) {
     int len = 0;
     for (int i = 0; i < colnames.size(); i++) {
-      len += colnames.get(i).equals("*") ? schema.length() : 1;
+      len += colnames.get(i).indexOf("*") != -1 ? schema.length() : 1;
     }
 
     int[] indices = new int[len];
     int offset = 0;
     for (int i = 0; i < colnames.size(); i++) {
       String colname = colnames.get(i);
-      if (colname.equals("*")) {
+      if (colname.indexOf("*") != -1) {
         int j;
         for (j = 0; j < schema.length(); j++) {
-          indices[i + offset] = j;
+          indices[i + offset + j] = j;
         }
         offset += j - 1;
       } else {
