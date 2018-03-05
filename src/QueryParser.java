@@ -14,6 +14,7 @@ public class QueryParser {
     keywords.add("WHERE");
     keywords.add("LIMIT");
     keywords.add("INGEST");
+    keywords.add("SCHEMA");
 
     Query queryObj = new Query();
     List<String> words = new ArrayList<>();
@@ -66,6 +67,10 @@ public class QueryParser {
             break;
           case "INGEST":
             queryObj.ingest.add(currentWord);
+            break;
+          case "SCHEMA":
+            queryObj.type = "SCHEMA";
+            queryObj.schema = currentWord;
         }
       }
     }

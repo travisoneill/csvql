@@ -33,6 +33,9 @@ public class Executor {
       case "JOIN":
         tryJoin(query);
         break;
+      case "SCHEMA":
+        trySchema(query);
+        break;
       default:
         System.out.println("Malformed query: " + sqlQuery);
     }
@@ -222,6 +225,17 @@ public class Executor {
     new Thread(writer).start();
   }
 
+  private static void getSchema(Query query) {
+    String[] ref = query.schema.split("\\.");
+    String db = ref.length > 1 ? ref[0] : System.getenv("CSVQL_DBNAME");
+    String table = ref.length > 1 ? ref[1] : ref[0];
+    String[] dbTab = { db, table };
+    TableReader reader = TableReader.create(dbTab);
+    printRow(reader.readRow());
+    printRow(reader.readRow());
+    reader.close();
+  }
+
   private static void tryIngest(Query query) {
     try {
       ingest(query);
@@ -241,6 +255,14 @@ public class Executor {
   private static void tryJoin(Query query) {
     try {
       executeJoin(query);
+    } catch (Exception err) {
+      Utils.traceErr(err, "Query Execution Error:");
+    }
+  }
+
+  private static void trySchema(Query query) {
+    try {
+      getSchema(query);
     } catch (Exception err) {
       Utils.traceErr(err, "Query Execution Error:");
     }

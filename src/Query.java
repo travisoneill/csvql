@@ -10,6 +10,7 @@ public class Query {
   public String[] join = null;
   public List<String> on = new ArrayList<>();
   public List<String> ingest = new ArrayList<>();
+  public String schema;
 
   public void print() {
     Utils.print("SELECT: ", select);
