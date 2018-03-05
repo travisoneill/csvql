@@ -17,6 +17,14 @@ public class StringColumn extends Column {
         return compVal != -1;
       case "<=":
         return compVal != 1;
+      case "!=":
+        return compVal != 0;
+      case "=$":
+        return val.endsWith(comp);
+      case "^=":
+        return val.startsWith(comp);
+      case "*=":
+        return val.indexOf(comp) != -1;
       default:
         return true;
     }
