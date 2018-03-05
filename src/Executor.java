@@ -5,6 +5,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.Path;
+import java.nio.file.FileAlreadyExistsException;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class Executor {
 
@@ -13,22 +19,22 @@ public class Executor {
     try {
       query = QueryParser.parse(sqlQuery);
     } catch (Exception err) {
-      System.out.println("Query Parsing Error:");
-      System.out.println(err.getMessage());
-      err.printStackTrace();
+      Utils.traceErr(err, "Query Parsing Error:");
       return;
     }
 
-    try {
-      if (query.isJoin()) {
-        executeJoin(query);
-      } else {
-        executeSimple(query);
-      }
-    } catch (Exception err) {
-      System.out.println("Query Execution Error:");
-      System.out.println(err.getMessage());
-      err.printStackTrace();
+    switch (query.type) {
+      case "INGEST":
+        tryIngest(query);
+        break;
+      case "SELECT":
+        trySimple(query);
+        break;
+      case "JOIN":
+        tryJoin(query);
+        break;
+      default:
+        System.out.println("Malformed query: " + sqlQuery);
     }
   }
 
@@ -170,5 +176,73 @@ public class Executor {
     }
 
     System.out.println(out.toString());
+  }
+
+  private static void ingest(Query query) {
+    String path = query.ingest.get(0);
+    Path csvPath = Paths.get(path);
+    if (!Files.exists(csvPath)) {
+      System.out.println("Invalid path: " + path);
+    }
+
+    String[] pathArr = path.split("/");
+    String filename = pathArr[pathArr.length - 1];
+    String home = System.getenv("CSVQL_DBHOME");
+    String db = System.getenv("CSVQL_DBNAME");
+    String tablename;
+
+    if (query.ingest.size() > 1) {
+      String[] tabCol = query.ingest.get(1).toLowerCase().split("\\.");
+      if (tabCol.length == 1) {
+        tablename = tabCol[0];
+      } else {
+        tablename = tabCol[1];
+        db = tabCol[1];
+      }
+    } else {
+      tablename = filename.replaceAll(".csv", "");
+    }
+
+    Path tablePath = Paths.get(home, "/", db, "/", tablename + ".csv");
+    try {
+      Files.createFile(tablePath);
+    } catch (FileAlreadyExistsException err) {
+      Utils.traceErr(err, "Table already exists");
+      return;
+    } catch (Exception err) {
+      Utils.traceErr(err, "Table creation failure");
+      return;
+    }
+
+    BlockingQueue<String> readWriteQueue = new ArrayBlockingQueue<String>(1024);
+    IngestionReader reader = new IngestionReader(csvPath, readWriteQueue);
+    IngestionWriter writer = new IngestionWriter(tablePath, readWriteQueue);
+
+    new Thread(reader).start();
+    new Thread(writer).start();
+  }
+
+  private static void tryIngest(Query query) {
+    try {
+      ingest(query);
+    } catch (Exception err) {
+      Utils.traceErr(err, "Ingestion Error:");
+    }
+  }
+
+  private static void trySimple(Query query) {
+    try {
+      executeSimple(query);
+    } catch (Exception err) {
+      Utils.traceErr(err, "Query Execution Error:");
+    }
+  }
+
+  private static void tryJoin(Query query) {
+    try {
+      executeJoin(query);
+    } catch (Exception err) {
+      Utils.traceErr(err, "Query Execution Error:");
+    }
   }
 }

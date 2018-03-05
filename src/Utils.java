@@ -58,4 +58,18 @@ public class Utils {
   public static void print(Object obj) {
     System.out.println(obj);
   }
+
+  public static void traceErr(Exception err, String ...msgs) {
+    for(String msg:msgs) {
+      System.out.println(msg);
+    }
+
+    System.out.println(err.getMessage());
+    err.printStackTrace();
+  }
+
+  public static void traceErr(Exception err) {
+    System.out.println(err.getMessage());
+    err.printStackTrace();
+  }
 }

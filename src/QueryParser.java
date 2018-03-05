@@ -13,6 +13,7 @@ public class QueryParser {
     keywords.add("ON");
     keywords.add("WHERE");
     keywords.add("LIMIT");
+    keywords.add("INGEST");
 
     Query queryObj = new Query();
     List<String> words = new ArrayList<>();
@@ -36,6 +37,7 @@ public class QueryParser {
     }
 
     String keyword = words.get(0);
+    queryObj.type = keyword.toUpperCase();
     for (int i = 1; i < words.size(); i++) {
       String currentWord = words.get(i);
       String capital = currentWord.toUpperCase();
@@ -50,6 +52,7 @@ public class QueryParser {
             queryObj.from = parseTablename(currentWord);
             break;
           case "JOIN":
+            queryObj.type = "JOIN";
             queryObj.join = parseTablename(currentWord);
             break;
           case "ON":
@@ -60,18 +63,23 @@ public class QueryParser {
             break;
           case "LIMIT":
             queryObj.limit = Integer.parseInt(currentWord);
+            break;
+          case "INGEST":
+            queryObj.ingest.add(currentWord);
         }
       }
     }
 
-    String tablename = queryObj.from[1];
-    for (int i = 0; i < queryObj.select.size(); i++) {
-      String tabCol = parseColumn(queryObj.select.get(i), tablename);
-      queryObj.select.set(i, tabCol);
-    }
+    if (queryObj.type.equals("SELECT")) {
+      String tablename = queryObj.from[1];
+      for (int i = 0; i < queryObj.select.size(); i++) {
+        String tabCol = parseColumn(queryObj.select.get(i), tablename);
+        queryObj.select.set(i, tabCol);
+      }
 
-    if (queryObj.where.size() > 0) {
-      queryObj.where.set(0, parseColumn(queryObj.where.get(0), tablename));
+      if (queryObj.where.size() > 0) {
+        queryObj.where.set(0, parseColumn(queryObj.where.get(0), tablename));
+      }
     }
 
     return queryObj;

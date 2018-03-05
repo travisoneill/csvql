@@ -13,8 +13,7 @@ public class TableReader {
     try {
       return new TableReader(tablename);
     } catch (IOException err) {
-      String msg = err.getMessage();
-      System.out.println(msg);
+      Utils.traceErr(err);
       return null;
     }
   }
@@ -61,7 +60,7 @@ public class TableReader {
       }
     }
 
-    return rowData;
+    return endOfFile ? null : rowData;
   }
 
   public String[] readRow() {
@@ -70,7 +69,7 @@ public class TableReader {
     } catch (IOException err) {
       String msg = err.getMessage();
       System.out.println(msg);
-      return new String[0];
+      return null;
     }
   }
 
